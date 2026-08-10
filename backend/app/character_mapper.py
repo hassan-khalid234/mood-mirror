@@ -36,19 +36,58 @@ CHARACTER_MAP = {
     },
 }
 
+# Below this confidence, we don't commit to a single character —
+# we surface the top 2 candidates instead so the UI can show a
+# "mixed feelings" state rather than a falsely confident answer.
+CONFIDENCE_THRESHOLD = 0.60
+
+
 def map_emotion_to_character(emotion_scores: dict) -> dict:
     """
-    Identifies dominant emotion score and returns character archetype details.
+    Takes the full emotion score dict, finds the dominant emotion,
+    and returns either a single confident character match, or a
+    "mixed" result with the top 2 candidates if confidence is low.
     """
-    dominant_emotion = max(emotion_scores, key=emotion_scores.get)
-    confidence = emotion_scores[dominant_emotion]
-    character_data = CHARACTER_MAP[dominant_emotion]
+    # Sort emotions by score, descending
+    ranked = sorted(emotion_scores.items(), key=lambda kv: kv[1], reverse=True)
+    top_emotion, top_confidence = ranked[0]
+    second_emotion, second_confidence = ranked[1]
 
+    top_character = CHARACTER_MAP[top_emotion]
+
+    if top_confidence >= CONFIDENCE_THRESHOLD:
+        return {
+            "status": "confident",
+            "dominant_emotion": top_emotion,
+            "confidence": top_confidence,
+            "character": top_character["character"],
+            "theme_color": top_character["theme_color"],
+            "tagline": top_character["tagline"],
+            "all_scores": emotion_scores,
+        }
+
+    # Low confidence — return top 2 as a "mixed" result
+    second_character = CHARACTER_MAP[second_emotion]
     return {
-        "dominant_emotion": dominant_emotion,
-        "confidence": confidence,
-        "character": character_data["character"],
-        "theme_color": character_data["theme_color"],
-        "tagline": character_data["tagline"],
-        "all_scores": emotion_scores
+        "status": "mixed",
+        "dominant_emotion": top_emotion,
+        "confidence": top_confidence,
+        "character": top_character["character"],
+        "theme_color": top_character["theme_color"],
+        "tagline": top_character["tagline"],
+        "candidates": [
+            {
+                "emotion": top_emotion,
+                "confidence": top_confidence,
+                "character": top_character["character"],
+                "theme_color": top_character["theme_color"],
+            },
+            {
+                "emotion": second_emotion,
+                "confidence": second_confidence,
+                "character": second_character["character"],
+                "theme_color": second_character["theme_color"],
+            },
+        ],
+        "all_scores": emotion_scores,
     }
