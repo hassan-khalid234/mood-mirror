@@ -3,6 +3,147 @@ import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+// Maps backend `dominant_emotion` values to theme class + accent color.
+// Character NAMES still come from the backend (character_mapper.py) —
+// this just controls which visual theme wraps the result.
+const THEME_CONFIG = {
+  joy: { themeClass: 'theme-joy', accent: '#C41E3A' },
+  sadness: { themeClass: 'theme-sadness', accent: '#6B7280' },
+  anger: { themeClass: 'theme-anger', accent: '#3CB043' },
+  fear: { themeClass: 'theme-fear', accent: '#8B0000' },
+  surprise: { themeClass: 'theme-surprise', accent: '#FFC72C' },
+  disgust: { themeClass: 'theme-disgust', accent: '#D4AF37' },
+  neutral: { themeClass: 'theme-neutral', accent: '#1E4FA0' },
+};
+
+/* ---------- Original motif icons (one per emotion, not character likenesses) ---------- */
+
+function WebMotif({ color }) {
+  // Joy — diagonal web-lines, radiating energy
+  return (
+    <svg className="motif-icon" viewBox="0 0 200 200" fill="none">
+      <g stroke={color} strokeWidth="2" opacity="0.9">
+        {[0, 30, 60, 90, 120, 150].map((deg) => (
+          <line
+            key={deg}
+            x1="100"
+            y1="100"
+            x2={100 + 90 * Math.cos((deg * Math.PI) / 180)}
+            y2={100 + 90 * Math.sin((deg * Math.PI) / 180)}
+          />
+        ))}
+        {[25, 50, 75].map((r) => (
+          <circle key={r} cx="100" cy="100" r={r} opacity="0.6" />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+function WingMotif({ color }) {
+  // Sadness — twin wing silhouettes, folded inward
+  return (
+    <svg className="motif-icon" viewBox="0 0 200 200" fill="none">
+      <path
+        d="M100 60 C60 40 20 55 10 90 C40 80 65 85 90 105 C70 95 45 100 25 115 C55 110 80 118 100 140"
+        stroke={color}
+        strokeWidth="3"
+        fill="none"
+      />
+      <path
+        d="M100 60 C140 40 180 55 190 90 C160 80 135 85 110 105 C130 95 155 100 175 115 C145 110 120 118 100 140"
+        stroke={color}
+        strokeWidth="3"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
+function ImpactMotif({ color }) {
+  // Anger — cracked impact burst
+  return (
+    <svg className="motif-icon" viewBox="0 0 200 200" fill="none">
+      <circle cx="100" cy="100" r="70" stroke={color} strokeWidth="3" opacity="0.4" />
+      {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
+        <line
+          key={deg}
+          x1={100 + 30 * Math.cos((deg * Math.PI) / 180)}
+          y1={100 + 30 * Math.sin((deg * Math.PI) / 180)}
+          x2={100 + 85 * Math.cos((deg * Math.PI) / 180)}
+          y2={100 + 85 * Math.sin((deg * Math.PI) / 180)}
+          stroke={color}
+          strokeWidth="4"
+        />
+      ))}
+      <circle cx="100" cy="100" r="18" fill={color} opacity="0.85" />
+    </svg>
+  );
+}
+
+function RadarMotif({ color }) {
+  // Fear — sonar/heightened-sense arcs
+  return (
+    <svg className="motif-icon" viewBox="0 0 200 200" fill="none">
+      <g stroke={color} strokeWidth="2.5">
+        <path d="M40 140 A85 85 0 0 1 160 140" opacity="0.9" />
+        <path d="M60 140 A60 60 0 0 1 140 140" opacity="0.65" />
+        <path d="M80 140 A35 35 0 0 1 120 140" opacity="0.4" />
+      </g>
+      <circle cx="100" cy="140" r="6" fill={color} />
+    </svg>
+  );
+}
+
+function LightningMotif({ color }) {
+  // Surprise — speed streak / lightning
+  return (
+    <svg className="motif-icon" viewBox="0 0 200 200" fill="none">
+      <path
+        d="M110 20 L60 105 L95 105 L80 180 L145 90 L108 90 Z"
+        fill={color}
+        opacity="0.9"
+      />
+      <line x1="20" y1="60" x2="55" y2="60" stroke={color} strokeWidth="3" opacity="0.5" />
+      <line x1="15" y1="90" x2="50" y2="90" stroke={color} strokeWidth="3" opacity="0.35" />
+    </svg>
+  );
+}
+
+function ClawMotif({ color }) {
+  // Disgust — claw-slash marks
+  return (
+    <svg className="motif-icon" viewBox="0 0 200 200" fill="none">
+      <g stroke={color} strokeWidth="6" strokeLinecap="round" opacity="0.9">
+        <line x1="40" y1="30" x2="100" y2="170" />
+        <line x1="70" y1="25" x2="130" y2="165" />
+        <line x1="100" y1="20" x2="160" y2="160" />
+      </g>
+    </svg>
+  );
+}
+
+function CalmMotif({ color }) {
+  // Neutral — steady radial glow, balanced rings
+  return (
+    <svg className="motif-icon" viewBox="0 0 200 200" fill="none">
+      <circle cx="100" cy="100" r="80" stroke={color} strokeWidth="2" opacity="0.3" />
+      <circle cx="100" cy="100" r="55" stroke={color} strokeWidth="2.5" opacity="0.55" />
+      <circle cx="100" cy="100" r="28" fill={color} opacity="0.85" />
+    </svg>
+  );
+}
+
+const MOTIFS = {
+  joy: WebMotif,
+  sadness: WingMotif,
+  anger: ImpactMotif,
+  fear: RadarMotif,
+  surprise: LightningMotif,
+  disgust: ClawMotif,
+  neutral: CalmMotif,
+};
+
 function App() {
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
@@ -30,56 +171,59 @@ function App() {
   };
 
   const isMixed = result?.status === 'mixed';
+  const dominant = result?.dominant_emotion;
+  const theme = THEME_CONFIG[dominant];
+  const themeClass = theme?.themeClass || 'theme-default';
+  const Motif = MOTIFS[dominant];
 
   return (
-    <div
-      className="app"
-      style={{ backgroundColor: result?.theme_color || '#111', minHeight: '100vh', color: '#fff', padding: '2rem' }}
-    >
-      <h1>Mood Mirror</h1>
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Type how you're feeling..."
-        rows={4}
-        style={{ width: '100%', maxWidth: '500px', display: 'block', margin: '1rem 0' }}
-      />
-      <button onClick={handleAnalyze} disabled={loading}>
-        {loading ? 'Analyzing...' : 'Reveal My Character'}
-      </button>
+    <div className={`app ${themeClass}`}>
+      <div className="header">
+        <h1 className="logo-main">MOOD</h1>
+        <span className="logo-sub">MIRROR</span>
+      </div>
 
-      {error && <p className="error" style={{ color: 'red' }}>{error}</p>}
+      <div className="prompt-row">
+        <input
+          className="prompt-input"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Type how you're feeling..."
+          onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
+        />
+        <button className="enter-btn" onClick={handleAnalyze} disabled={loading}>
+          {loading ? '...' : 'Enter'}
+        </button>
+      </div>
+
+      {error && <p className="status-text error-text">{error}</p>}
+
+      {!result && !error && (
+        <div className="empty-state">
+          <p>Write a sentence about how you're feeling right now — Mood Mirror will read the emotion and show you the character it matches.</p>
+        </div>
+      )}
 
       {result && !isMixed && (
-        <div className="result" style={{ marginTop: '2rem', background: 'rgba(0,0,0,0.5)', padding: '1rem', borderRadius: '8px' }}>
-          <h2>{result.character}</h2>
-          <p className="tagline">"{result.tagline}"</p>
-          <p className="emotion">
-            Dominant emotion: <strong>{result.dominant_emotion}</strong> (
-            {(result.confidence * 100).toFixed(0)}%)
-          </p>
+        <div className="result-row">
+          {Motif && <Motif color={theme.accent} />}
+          <div className="character-info">
+            <h2>{result.character}</h2>
+            <p className="emotion">{result.dominant_emotion}</p>
+            <p className="confidence">Confidence {(result.confidence * 100).toFixed(0)}%</p>
+          </div>
         </div>
       )}
 
       {result && isMixed && (
-        <div className="result mixed" style={{ marginTop: '2rem', background: 'rgba(0,0,0,0.5)', padding: '1rem', borderRadius: '8px' }}>
-          <h2>Mixed feelings detected</h2>
-          <p>Your text doesn't clearly point to one character — here are the top two matches:</p>
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+        <div className="mixed-row">
+          <h2 className="mixed-heading">Mixed feelings detected</h2>
+          <p className="mixed-subtext">Your text doesn't clearly point to one character — top matches:</p>
+          <div className="candidate-cards">
             {result.candidates.map((c) => (
-              <div
-                key={c.emotion}
-                style={{
-                  flex: '1 1 200px',
-                  background: c.theme_color,
-                  padding: '1rem',
-                  borderRadius: '8px',
-                }}
-              >
-                <h3 style={{ margin: 0 }}>{c.character}</h3>
-                <p style={{ margin: '0.25rem 0 0' }}>
-                  {c.emotion} ({(c.confidence * 100).toFixed(0)}%)
-                </p>
+              <div className="candidate-card" key={c.emotion}>
+                <h3>{c.character}</h3>
+                <p>{c.emotion} ({(c.confidence * 100).toFixed(0)}%)</p>
               </div>
             ))}
           </div>
