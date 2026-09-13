@@ -3,7 +3,7 @@ import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-// Maps backend `dominant_emotion` values to theme class + accent color.
+// Maps backend `matched_emotion` values to theme class + accent color.
 // Character NAMES still come from the backend (character_mapper.py) —
 // this just controls which visual theme wraps the result.
 const THEME_CONFIG = {
@@ -171,7 +171,7 @@ function App() {
   };
 
   const isMixed = result?.status === 'mixed';
-  const dominant = result?.dominant_emotion;
+  const dominant = result?.matched_emotion;
   const theme = THEME_CONFIG[dominant];
   const themeClass = theme?.themeClass || 'theme-default';
   const Motif = MOTIFS[dominant];
@@ -209,7 +209,7 @@ function App() {
           {Motif && <Motif color={theme.accent} />}
           <div className="character-info">
             <h2>{result.character}</h2>
-            <p className="emotion">{result.dominant_emotion}</p>
+            <p className="emotion">{result.matched_emotion} · {result.matched_theme}</p>
             <p className="confidence">Confidence {(result.confidence * 100).toFixed(0)}%</p>
           </div>
         </div>
@@ -220,10 +220,10 @@ function App() {
           <h2 className="mixed-heading">Mixed feelings detected</h2>
           <p className="mixed-subtext">Your text doesn't clearly point to one character — top matches:</p>
           <div className="candidate-cards">
-            {result.candidates.map((c) => (
-              <div className="candidate-card" key={c.emotion}>
+            {result.candidates.map((c, i) => (
+              <div className="candidate-card" key={i} style={{ borderColor: c.theme_color }}>
                 <h3>{c.character}</h3>
-                <p>{c.emotion} ({(c.confidence * 100).toFixed(0)}%)</p>
+                <p>{(c.confidence * 100).toFixed(0)}% match</p>
               </div>
             ))}
           </div>
