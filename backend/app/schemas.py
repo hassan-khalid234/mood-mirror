@@ -7,18 +7,19 @@ class TextInput(BaseModel):
 
 
 class CandidateCharacter(BaseModel):
-    emotion: str
-    confidence: float
     character: str
+    confidence: float
     theme_color: str
 
 
 class CharacterResponse(BaseModel):
     status: Literal["confident", "mixed"]
-    dominant_emotion: str
-    confidence: float
     character: str
+    confidence: float
     theme_color: str
     tagline: str
-    all_scores: dict
+    matched_emotion: str
+    matched_theme: str
+    all_emotion_scores: dict
+    all_theme_scores: dict
     candidates: Optional[List[CandidateCharacter]] = None

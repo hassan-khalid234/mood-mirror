@@ -1,8 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.emotion_model import classify_emotion
-from app.character_mapper import map_emotion_to_character
-from app.schemas import TextInput, CharacterResponse
+from app.theme_model import classify_theme
+from app.character_mapper import map_to_character
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI(
     title="Mood Mirror API",
@@ -25,8 +27,9 @@ def health_check():
 @app.post("/analyze", response_model=CharacterResponse)
 def analyze_text(payload: TextInput):
     try:
-        scores = classify_emotion(payload.text)
-        result = map_emotion_to_character(scores)
+        emotion_scores = classify_emotion(payload.text)
+        theme_scores = classify_theme(payload.text)
+        result = map_to_character(emotion_scores, theme_scores)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
