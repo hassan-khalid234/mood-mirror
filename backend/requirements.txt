@@ -1,7 +1,5 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-torch
 fastapi==0.141.1
 pydantic==2.13.5
-transformers==5.15.0
 uvicorn
+requests
 python-dotenv
