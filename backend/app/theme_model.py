@@ -22,6 +22,7 @@ def classify_theme(text: str) -> dict:
     response = requests.post(HF_API_URL, headers=headers, json=payload, timeout=30)
     response.raise_for_status()
     result = response.json()
-    if isinstance(result, list):
-        result = result[0]
-    return dict(zip(result["labels"], [round(s, 4) for s in result["scores"]]))
+
+    # New router API returns a list of {"label": ..., "score": ...} objects,
+    # not the old {"sequence", "labels": [...], "scores": [...]} shape
+    return {item["label"]: round(item["score"], 4) for item in result}
