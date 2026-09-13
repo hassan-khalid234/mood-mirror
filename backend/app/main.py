@@ -1,9 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 from app.emotion_model import classify_emotion
 from app.theme_model import classify_theme
 from app.character_mapper import map_to_character
-from dotenv import load_dotenv
+from app.schemas import TextInput, CharacterResponse
+
 load_dotenv()
 
 app = FastAPI(
